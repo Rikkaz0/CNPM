@@ -39,14 +39,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildUI() {
     return DashChat(
-      // inputOptions: InputOptions(trailing: [
-      //   // IconButton(
-      //   //   onPressed: _sendMediaMessage,
-      //   //   icon: const Icon(
-      //   //     Icons.image,
-      //   //   ),
-      //   // )
-      // ]),
+      inputOptions: InputOptions(trailing: [
+        IconButton(
+          onPressed: _sendMediaMessage,
+          icon: const Icon(
+            Icons.image,
+          ),
+        )
+      ]),
       currentUser: currentUser,
       onSend: _sendMessage,
       messages: messages,
@@ -102,25 +102,25 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // void _sendMediaMessage() async {
-  //   ImagePicker picker = ImagePicker();
-  //   XFile? file = await picker.pickImage(
-  //     source: ImageSource.gallery,
-  //   );
-  //   if (file != null) {
-  //     ChatMessage chatMessage = ChatMessage(
-  //       user: currentUser,
-  //       createdAt: DateTime.now(),
-  //       text: "Thuốc này là gì?",
-  //       medias: [
-  //         ChatMedia(
-  //           url: file.path,
-  //           fileName: "",
-  //           type: MediaType.image,
-  //         )
-  //       ],
-  //     );
-  //     _sendMessage(chatMessage);
-  //   }
-  // }
+  void _sendMediaMessage() async {
+    ImagePicker picker = ImagePicker();
+    XFile? file = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (file != null) {
+      ChatMessage chatMessage = ChatMessage(
+        user: currentUser,
+        createdAt: DateTime.now(),
+        text: "Thuốc này là gì?",
+        medias: [
+          ChatMedia(
+            url: file.path,
+            fileName: "",
+            type: MediaType.image,
+          )
+        ],
+      );
+      _sendMessage(chatMessage);
+    }
+  }
 }
