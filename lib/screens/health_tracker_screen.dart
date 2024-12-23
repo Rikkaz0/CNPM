@@ -6,7 +6,7 @@ import 'package:personal.health.manager/util.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:carp_serializable/carp_serializable.dart';
 import 'package:personal.health.manager/screens/add_data_screen.dart';
-
+import 'chart_screen.dart';
 
 class HealthTrackerScreen extends StatefulWidget {
   @override
@@ -175,7 +175,7 @@ Future<void> addData({
   );
 }
 
-Future<void> addDataToHealthConnect({
+Future<bool> addDataToHealthConnect({
   required HealthDataType type,
   required dynamic value,
   required DateTime startTime,
@@ -187,31 +187,20 @@ Future<void> addDataToHealthConnect({
   try {
     switch (type) {
       case HealthDataType.HEIGHT:
-        success &= await Health().writeHealthData(
-              value: value as double,
-              type: type,
-              startTime: startTime,
-              endTime: endTime,
-              recordingMethod: recordingMethod,
-            );
-        break;
       case HealthDataType.WEIGHT:
-        success &= await Health().writeHealthData(
-              value: value as double,
-              type: type,
-              startTime: startTime,
-              endTime: endTime,
-              recordingMethod: recordingMethod,
-            );
-        break;
       case HealthDataType.HEART_RATE:
-        success &= await Health().writeHealthData(
-              value: value as double,
-              type: type,
-              startTime: startTime,
-              endTime: endTime,
-              recordingMethod: recordingMethod,
-            );
+        // Đảm bảo rằng giá trị được ghi là double
+        if (value is double) {
+          success &= await Health().writeHealthData(
+                value: value,
+                type: type,
+                startTime: startTime,
+                endTime: endTime,
+                recordingMethod: recordingMethod,
+              );
+        } else {
+          throw Exception('Value must be a double for $type');
+        }
         break;
       // Thêm các trường hợp khác tùy thuộc vào HealthDataType bạn muốn hỗ trợ
       default:
@@ -226,9 +215,14 @@ Future<void> addDataToHealthConnect({
       _state = AppState.DATA_NOT_ADDED;
     });
     print('Error writing health data: $e');
+    success = false;
   }
+
+  return success;
 }
 
+
+               
 
   /// Delete some random health data.
   Future<void> deleteData() async {
@@ -383,6 +377,23 @@ Future<void> addDataToHealthConnect({
                         ),
                       ),
 
+                    TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChartPage(healthDataList: _healthDataList),
+                            ),
+                          );
+                        },
+                        style: const ButtonStyle(
+                          backgroundColor: WidgetStatePropertyAll(Colors.blue),
+                        ),
+                        child: const Text(
+                          "Chart",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
             
                     TextButton(
                         onPressed: deleteData,

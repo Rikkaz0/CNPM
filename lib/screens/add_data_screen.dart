@@ -77,11 +77,7 @@ class _AddDataPageState extends State<AddDataPage> {
       try {
         switch (_selectedType) {
           case HealthDataType.HEIGHT:
-            parsedValue = double.parse(_value);
-            break;
           case HealthDataType.WEIGHT:
-            parsedValue = double.parse(_value);
-            break;
           case HealthDataType.HEART_RATE:
             parsedValue = double.parse(_value);
             break;
@@ -149,6 +145,9 @@ class _AddDataPageState extends State<AddDataPage> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Vui lòng nhập giá trị';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Giá trị phải là số';
                     }
                     return null;
                   },
