@@ -50,10 +50,8 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildChart() {
-    // Lọc dữ liệu dựa trên loại biểu đồ đã chọn
     List<Map<String, dynamic>> numericData = _prepareNumericData();
 
-    // Tạo danh sách các điểm dữ liệu cho biểu đồ
     List<FlSpot> spots = [];
     for (int i = 0; i < numericData.length; i++) {
       var entry = numericData[i];
@@ -127,15 +125,20 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   List<Map<String, dynamic>> _prepareNumericData() {
+  // Lọc dữ liệu phù hợp
   List<Map<String, dynamic>> numericData = [];
   for (var data in widget.healthDataList) {
     if (_isRelevantType(data.type)) {
-      var value = _getNumericValue(data.value);
+      var value = _getNumericValue(data.value, data.type);
       if (value != null) {
-        numericData.add({'date': data.dateFrom, 'value': value.toDouble()}); // Chuyển thành double
+        numericData.add({'date': data.dateFrom, 'value': value});
       }
     }
   }
+
+  // Sắp xếp dữ liệu theo thời gian từ cũ nhất đến mới nhất
+  numericData.sort((a, b) => a['date'].compareTo(b['date']));
+
   return numericData;
 }
 
@@ -153,22 +156,25 @@ class _ChartPageState extends State<ChartPage> {
     }
   }
 
-  double? _getNumericValue(HealthValue value) {
-  if (value is NumericHealthValue) {
-    return value.numericValue.toDouble(); // Chuyển thành double
+  double? _getNumericValue(HealthValue value, HealthDataType type) {
+    if (value is NumericHealthValue) {
+      // Chuyển từ meters sang centimeters nếu là Height
+      if (type == HealthDataType.HEIGHT) {
+        return value.numericValue * 100;
+      }
+      return value.numericValue.toDouble();
+    }
+    return null;
   }
-  return null;
-}
-
 
   double _getInterval() {
     switch (_selectedChartType) {
       case 'Height':
-        return 10;
+        return 10; // Centimeters
       case 'Weight':
-        return 5;
+        return 5; // Kilograms
       case 'Heart Rate':
-        return 20;
+        return 20; // Beats per minute
       default:
         return 10;
     }
@@ -176,6 +182,11 @@ class _ChartPageState extends State<ChartPage> {
 
   double _getMinY(List<FlSpot> spots) {
     double minY = spots.map((spot) => spot.y).reduce((a, b) => a < b ? a : b);
+
+    if (_selectedChartType == 'Height' && minY < 0) {
+      return 0;
+    }
+
     return minY.isFinite ? (minY - _getInterval()) : 0;
   }
 
