@@ -303,12 +303,11 @@ Future<bool> addDataToHealthConnect({
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('Health Tracker'),
         ),
+
         body: Column(
           children: [
             Wrap(
@@ -425,8 +424,7 @@ Future<bool> addDataToHealthConnect({
             Expanded(child: Center(child: _content))
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget get _dataFiltration => Column(
@@ -539,44 +537,89 @@ Future<bool> addDataToHealthConnect({
   Widget get _contentDataReady => ListView.builder(
       itemCount: _healthDataList.length,
       itemBuilder: (_, index) {
-        // filter out manual entires if not wanted
-        if (recordingMethodsToFilter
-            .contains(_healthDataList[index].recordingMethod)) {
+        HealthDataPoint p = _healthDataList[index];
+        
+        // Bỏ qua các mục không cần thiết dựa trên bộ lọc
+        if (recordingMethodsToFilter.contains(p.recordingMethod)) {
           return Container();
         }
 
-        HealthDataPoint p = _healthDataList[index];
-        if (p.value is AudiogramHealthValue) {
-          return ListTile(
-            title: Text("${p.typeString}: ${p.value}"),
-            trailing: Text('${p.unitString}'),
-            subtitle: Text('${p.dateFrom} - ${p.dateTo}\n${p.recordingMethod}'),
-          );
+        // Xác định biểu tượng và màu sắc dựa trên loại dữ liệu
+        IconData iconData;
+        Color iconColor;
+
+        switch (p.type) {
+          case HealthDataType.STEPS:
+            iconData = Icons.directions_walk;
+            iconColor = Colors.blue;
+            break;
+          case HealthDataType.HEART_RATE:
+            iconData = Icons.favorite;
+            iconColor = Colors.red;
+            break;
+          case HealthDataType.WEIGHT:
+            iconData = Icons.scale;
+            iconColor = Colors.green;
+            break;
+          case HealthDataType.HEIGHT:
+            iconData = Icons.height;
+            iconColor = Colors.green;
+            break;
+          case HealthDataType.BASAL_ENERGY_BURNED:
+            iconData = Icons.energy_savings_leaf;
+            iconColor = const Color.fromARGB(255, 198, 208, 0);
+            break;
+          case HealthDataType.WORKOUT:
+            iconData = Icons.sports;
+            iconColor = const Color.fromARGB(255, 198, 208, 0);
+            break;
+          case HealthDataType.TOTAL_CALORIES_BURNED:
+            iconData = Icons.energy_savings_leaf;
+            iconColor = const Color.fromARGB(255, 198, 208, 0);
+            break;
+          case HealthDataType.DISTANCE_DELTA:
+            iconData = Icons.arrow_forward;
+            iconColor = const Color.fromARGB(255, 198, 208, 0);
+            break;
+          // Thêm các trường hợp khác tùy thuộc vào HealthDataType
+          default:
+            iconData = Icons.health_and_safety;
+            iconColor = Colors.grey;
         }
-        if (p.value is WorkoutHealthValue) {
-          return ListTile(
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: ExpansionTile(
+            leading: Icon(iconData, color: iconColor, size: 30),
             title: Text(
-                "${p.typeString}: ${(p.value as WorkoutHealthValue).totalEnergyBurned} ${(p.value as WorkoutHealthValue).totalEnergyBurnedUnit?.name}"),
-            trailing: Text(
-                '${(p.value as WorkoutHealthValue).workoutActivityType.name}'),
-            subtitle: Text('${p.dateFrom} - ${p.dateTo}\n${p.recordingMethod}'),
-          );
-        }
-        if (p.value is NutritionHealthValue) {
-          return ListTile(
-            title: Text(
-                "${p.typeString} ${(p.value as NutritionHealthValue).mealType}: ${(p.value as NutritionHealthValue).name}"),
-            trailing:
-                Text('${(p.value as NutritionHealthValue).calories} kcal'),
-            subtitle: Text('${p.dateFrom} - ${p.dateTo}\n${p.recordingMethod}'),
-          );
-        }
-        return ListTile(
-          title: Text("${p.typeString}: ${p.value}"),
-          trailing: Text('${p.unitString}'),
-          subtitle: Text('${p.dateFrom} - ${p.dateTo}\n${p.recordingMethod}'),
+              "${p.typeString}: ${p.value}",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            subtitle: Text(
+              '${p.dateFrom.toLocal().toString().split('.')[0]}',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Unit: ${p.unitString}", style: TextStyle(fontSize: 14)),
+                    SizedBox(height: 4),
+                    Text("Recorded by: ${p.recordingMethod.name}", style: TextStyle(fontSize: 14)),
+                    // Thêm các thông tin khác nếu cần
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
-      });
+      },
+    );
+
 
   Widget _contentNoData = const Text('No Data to show');
 
@@ -584,8 +627,8 @@ Future<bool> addDataToHealthConnect({
       const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
     const Text("Press 'Auth' to get permissions to access health data."),
     const Text("Press 'Fetch Dat' to get health data."),
-    const Text("Press 'Add Data' to add some random health data."),
-    const Text("Press 'Delete Data' to remove some random health data."),
+    const Text("Press 'Add Data' to add some health data."),
+    const Text("Press 'Delete Data' to remove add health data."),
   ]);
 
   Widget _authorized = const Text('Authorization granted!');
@@ -593,21 +636,20 @@ Future<bool> addDataToHealthConnect({
   Widget _authorizationNotGranted = const Column(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      const Text('Authorization not given.'),
       const Text(
           'For Google Health Connect please check if you have added the right permissions and services to the manifest file.'),
-      const Text('For Apple Health check your permissions in Apple Health.'),
+      
     ],
   );
 
   Widget _contentHealthConnectStatus = const Text(
-      'No status, click getHealthConnectSdkStatus to get the status.');
+      'No status, click Check Health Connect Status to get the status.');
 
   Widget _dataAdded = const Text('Data points inserted successfully.');
 
   Widget _dataDeleted = const Text('Data points deleted successfully.');
 
-  Widget get _stepsFetched => Text('Total number of steps: $_nofSteps.');
+  Widget get _stepsFetched => Text('Number of steps today: $_nofSteps.');
 
   Widget _dataNotAdded =
       const Text('Failed to add data.\nDo you have permissions to add data?');
